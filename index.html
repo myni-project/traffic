@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Traffic Light Food Classifier</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --primary: #905D5D;
+    --secondary: #F6EDEE;
+    --card: #FFFFFF;
+    --border: #E8DCDC;
+    --text-main: #3B2F2F;
+    --text-sub: #6B5B5B;
+
+    --green-ring: #2E7D32;
+    --green-bg: #EAF6EC;
+    --green-text: #1E6023;
+    --amber-ring: #B98900;
+    --amber-bg: #FFF6E0;
+    --amber-text: #8A6600;
+    --red-ring: #C0392B;
+    --red-bg: #FDEAE8;
+    --red-text: #A5301F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 64px; }
+
+  header { text-align: center; margin-bottom: 32px; }
+  .badge-top {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--secondary); padding: 6px 14px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 600; color: var(--primary); margin-bottom: 16px;
+  }
+  h1 { font-size: 26px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.3px; }
+  header p { color: var(--text-sub); font-size: 14.5px; margin: 0; line-height: 1.5; }
+
+  .input-card {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field-label { font-size: 13.5px; color: var(--text-sub); font-weight: 600; }
+  .field-label .unit { font-weight: 400; }
+
+  input[type="text"] {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    color: var(--text-main);
+    outline: none;
+    background: var(--bg);
+    font-family: inherit;
+    width: 100%;
+  }
+  input[type="text"]:focus { border-color: var(--primary) !important; }
+  input.error { border-color: var(--red-ring) !important; }
+
+  .error-text { font-size: 12px; color: var(--red-ring); margin-top: 4px; display: block; }
+
+  .section-label { font-size: 13.5px; color: var(--text-sub); font-weight: 600; display: block; margin-bottom: 8px; }
+
+  .basis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+  .basis-btn {
+    padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-main); font-weight: 600; font-size: 12.5px;
+    text-align: left; cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+  }
+  .basis-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  .denom-note { font-size: 12.5px; color: var(--text-sub); margin: 10px 0 0; line-height: 1.5; }
+
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .salt-toggle {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+  }
+  .salt-toggle-btns { display: flex; gap: 4px; }
+  .pill-btn {
+    padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-sub); font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .pill-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .salt-note { font-size: 11.5px; color: var(--text-sub); margin-top: 4px; display: block; }
+
+  .warn-text { color: var(--red-ring); font-size: 12.5px; margin-top: 10px; margin-bottom: 0; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-primary {
+    flex: 1; background: var(--primary); color: #fff; border: none; border-radius: 12px;
+    padding: 13px 16px; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 12px;
+    padding: 13px 20px; font-weight: 600; font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+
+  .results-section { margin-top: 32px; }
+  .results-heading { font-size: 17px; font-weight: 700; margin-bottom: 14px; }
+
+  .results-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+
+  .result-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px;
+    animation: fadeSlideIn 0.45s ease both;
+  }
+  .result-card-top { display: flex; align-items: center; justify-content: space-between; }
+  .result-card-name { display: flex; align-items: center; gap: 10px; }
+  .result-card-name .icon { font-size: 20px; }
+  .result-card-name .label { font-weight: 600; color: var(--text-main); font-size: 15.5px; }
+
+  .level-badge {
+    font-size: 12.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+    display: flex; align-items: center; gap: 5px; letter-spacing: 0.2px;
+  }
+  .level-badge.green { background: var(--green-bg); color: var(--green-text); }
+  .level-badge.amber { background: var(--amber-bg); color: var(--amber-text); }
+  .level-badge.red   { background: var(--red-bg); color: var(--red-text); }
+
+  .result-card-value { margin-top: 14px; font-size: 26px; font-weight: 700; color: var(--text-main); }
+  .result-card-value .unit-sub { font-size: 14px; font-weight: 500; color: var(--text-sub); }
+
+  .portion-note {
+    margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--red-text);
+    background: var(--red-bg); border-radius: 8px; padding: 6px 10px;
+  }
+
+  .summary-box {
+    margin-top: 20px; background: var(--secondary); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; animation: fadeSlideIn 0.45s ease both; animation-delay: 100ms;
+  }
+  .summary-box p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--text-main); }
+  .summary-box p.sub { margin: 10px 0 0; font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
+
+  .calc-box {
+    margin-top: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; animation: fadeSlideIn 0.45s ease both; animation-delay: 150ms;
+  }
+  .calc-toggle {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    background: transparent; border: none; padding: 0; cursor: pointer; font-family: inherit;
+  }
+  .calc-toggle h3 { font-size: 15px; font-weight: 700; margin: 0; }
+  .calc-toggle .chevron { font-size: 13px; color: var(--text-sub); }
+  .calc-intro { font-size: 12.5px; color: var(--text-sub); margin: 10px 0 14px; line-height: 1.5; }
+  .calc-item {
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .calc-item:last-child { margin-bottom: 0; }
+  .calc-item-title { font-weight: 700; font-size: 13.5px; margin-bottom: 8px; }
+  .calc-item-body { font-size: 12.5px; color: var(--text-sub); line-height: 1.9; }
+  .calc-item-body strong { color: var(--text-main); }
+  .calc-item-body em { color: var(--red-text); font-style: normal; font-weight: 600; }
+
+  .science-note {
+    margin-top: 16px; font-size: 12px; color: var(--text-sub); line-height: 1.6; padding: 0 4px;
+  }
+
+  .edu-box {
+    margin-top: 28px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px 22px; animation: fadeSlideIn 0.45s ease both;
+  }
+  .edu-box h3 { font-size: 15px; font-weight: 700; margin: 0 0 14px; }
+  .edu-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .edu-row:last-of-type { margin-bottom: 0; }
+  .edu-row .dot { font-size: 16px; line-height: 22px; }
+  .edu-row .title { font-weight: 700; font-size: 13.5px; }
+  .edu-row .desc { font-size: 13.5px; color: var(--text-sub); }
+  .edu-box .note {
+    margin-top: 16px; font-size: 13px; color: var(--text-sub); line-height: 1.6;
+  }
+  .edu-box .cutoff-note {
+    margin-top: 12px; font-size: 12px; color: var(--text-sub); line-height: 1.6;
+    border-top: 1px solid var(--border); padding-top: 12px;
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .result-card, .summary-box, .edu-box, .calc-box { animation: none; }
+  }
+
+  @media (max-width: 620px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .input-grid { grid-template-columns: 1fr !important; }
+    .basis-grid { grid-template-columns: 1fr !important; }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="badge-top">🚦 Traffic Light Food Labelling</div>
+    <h1>Traffic Light Food Classifier</h1>
+    <p>Menentukan kategori zat gizi berdasarkan sistem Traffic Light Food Labelling.</p>
+  </header>
+
+  <section class="input-card">
+    <div class="field">
+      <span class="field-label">Nama makanan/minuman <span class="unit">(opsional)</span></span>
+      <input type="text" id="foodName" placeholder="Contoh: Fried chicken" />
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <span class="section-label">Jenis input</span>
+      <div class="basis-grid" id="basisGrid"></div>
+    </div>
+
+    <div class="field hidden" id="denomField">
+      <span class="field-label" id="denomLabel"></span>
+      <input type="text" inputmode="decimal" id="denomInput" />
+      <span class="error-text hidden" id="denomError"></span>
+      <p class="denom-note">Berat/volume dapat berupa satu sajian pada kemasan atau berat/volume sesuai kebutuhan.</p>
+    </div>
+
+    <div style="margin-bottom:6px;">
+      <span class="section-label" id="nutrientContextLabel" style="margin-bottom:0;">Nilai gizi per 100 g</span>
+    </div>
+
+    <div class="input-grid">
+      <div class="field" style="margin-bottom:0;">
+        <span class="field-label">Lemak Total <span class="unit">(g)</span></span>
+        <input type="text" inputmode="decimal" id="fatInput" placeholder="0,0" />
+        <span class="error-text hidden" id="fatError"></span>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <span class="field-label">Lemak Jenuh <span class="unit">(g)</span></span>
+        <input type="text" inputmode="decimal" id="satFatInput" placeholder="0,0" />
+        <span class="error-text hidden" id="satFatError"></span>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <span class="field-label">Gula Total <span class="unit">(g)</span></span>
+        <input type="text" inputmode="decimal" id="sugarInput" placeholder="0,0" />
+        <span class="error-text hidden" id="sugarError"></span>
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <div class="salt-toggle">
+          <span class="field-label" id="saltFieldLabel">Garam <span class="unit">(g)</span></span>
+          <div class="salt-toggle-btns">
+            <button type="button" class="pill-btn active" id="saltModeSaltBtn">Garam</button>
+            <button type="button" class="pill-btn" id="saltModeSodiumBtn">Natrium</button>
+          </div>
+        </div>
+        <input type="text" inputmode="decimal" id="saltInput" placeholder="0,0" />
+        <span class="error-text hidden" id="saltError"></span>
+        <span class="salt-note hidden" id="saltConversionNote">Otomatis dikonversi: Garam (g) = Natrium (mg) ÷ 400</span>
+      </div>
+    </div>
+
+    <p class="warn-text hidden" id="satFatWarning">Lemak jenuh tidak boleh melebihi lemak total.</p>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="analyzeBtn">Analisis</button>
+      <button class="btn-secondary" id="resetBtn">Reset</button>
+    </div>
+  </section>
+
+  <section class="results-section hidden" id="resultsSection">
+    <h2 class="results-heading hidden" id="resultsHeading"></h2>
+    <div class="results-grid" id="resultsGrid"></div>
+
+    <div class="summary-box">
+      <p id="summaryText"></p>
+      <p class="sub">Sistem Traffic Light menilai setiap zat gizi secara terpisah sehingga satu produk dapat memiliki kombinasi beberapa warna.</p>
+    </div>
+
+    <div class="calc-box">
+      <button class="calc-toggle" id="calcToggle">
+        <h3>Detail Perhitungan</h3>
+        <span class="chevron" id="calcChevron">Tutup ▲</span>
+      </button>
+      <div id="calcBody">
+        <p class="calc-intro" id="calcIntro"></p>
+        <div id="calcItems"></div>
+      </div>
+    </div>
+
+    <p class="science-note">
+      Penilaian mengacu pada sistem UK Front-of-Pack Traffic Light Labelling dalam dua langkah.
+      <strong>Langkah 1:</strong> warna dasar ditentukan dari nilai per 100 gram atau per 100 mL. Jika nilai dimasukkan
+      berdasarkan berat atau volume tertentu (termasuk takaran saji pada kemasan), aplikasi mengonversinya terlebih dahulu
+      ke ekuivalen per 100 g/mL.
+      <strong>Langkah 2:</strong> untuk sajian besar (makanan di atas 100 g atau minuman di atas 150 mL), warna otomatis
+      menjadi merah jika satu sajian mengandung lebih dari 30% Reference Intake untuk zat gizi tersebut.
+    </p>
+  </section>
+
+  <section class="edu-box">
+    <h3>Cara membaca Traffic Light</h3>
+    <div class="edu-row"><span class="dot">🟢</span><div><span class="title">Rendah</span><span class="desc"> — Lebih sering dipilih.</span></div></div>
+    <div class="edu-row"><span class="dot">🟡</span><div><span class="title">Sedang</span><span class="desc"> — Konsumsi secukupnya.</span></div></div>
+    <div class="edu-row"><span class="dot">🔴</span><div><span class="title">Tinggi</span><span class="desc"> — Batasi frekuensi atau porsinya.</span></div></div>
+    <p class="note">Traffic Light membantu membandingkan kandungan zat gizi antarproduk dan mendukung pengambilan keputusan yang lebih baik.</p>
+    <p class="cutoff-note">Cut-off mengacu pada sistem UK Front-of-Pack Traffic Light Labelling (Food Standards Agency / Public Health England). Aplikasi ini adalah alat edukasi dan bukan merupakan regulasi resmi BPOM maupun Kemenkes RI.</p>
+  </section>
+</div>
+
+<script>
+  // ---------- Data ----------
+  // Cut-off per 100 g (makanan) atau per 100 mL (minuman)
+  const RULES = {
+    food: {
+      fat: { green: 3, amber: 17.5 },
+      satFat: { green: 1.5, amber: 5 },
+      sugar: { green: 5, amber: 22.5 },
+      salt: { green: 0.3, amber: 1.5 },
+    },
+    drink: {
+      fat: { green: 1.5, amber: 8.75 },
+      satFat: { green: 0.75, amber: 2.5 },
+      sugar: { green: 2.5, amber: 11.25 },
+      salt: { green: 0.3, amber: 0.75 },
+    },
+  };
+
+  // Kriteria tambahan sajian besar: merah jika satu sajian melebihi 30% Reference Intake
+  // (makanan > 100 g, minuman > 150 mL). Nilai dalam gram per sajian.
+  const PORTION_RED = {
+    food:  { threshold: 100, fat: 21,   satFat: 6, sugar: 27,   salt: 1.8 },
+    drink: { threshold: 150, fat: 10.5, satFat: 3, sugar: 13.5, salt: 0.9 },
+  };
+
+  const NUTRIENT_META = [
+    { key: "fat", label: "Lemak Total", icon: "🧈" },
+    { key: "satFat", label: "Lemak Jenuh", icon: "🧊" },
+    { key: "sugar", label: "Gula", icon: "🍬" },
+    { key: "salt", label: "Garam", icon: "🧂" },
+  ];
+
+  const SODIUM_TO_SALT = 400;
+
+  const LIGHT_LABEL = { green: "Low", amber: "Medium", red: "High" };
+  const LIGHT_DOT = { green: "🟢", amber: "🟡", red: "🔴" };
+
+  const BASIS_OPTIONS = [
+    { key: "food100", label: "Makanan (per 100 gram)", type: "food", mode: "direct", unit: "g" },
+    { key: "drink100", label: "Minuman (per 100 mL)", type: "drink", mode: "direct", unit: "mL" },
+    {
+      key: "foodWeight", label: "Makanan (per sajian/berat tertentu)", type: "food", mode: "custom", unit: "g",
+      denomLabel: "Berat makanan (gram)", denomPlaceholder: "cth. 25, 40, 80, 150",
+    },
+    {
+      key: "drinkWeight", label: "Minuman (per sajian/volume tertentu)", type: "drink", mode: "custom", unit: "mL",
+      denomLabel: "Volume minuman (mL)", denomPlaceholder: "cth. 150, 200, 250, 330",
+    },
+  ];
+
+  // ---------- State ----------
+  let basisKey = "food100";
+  let saltMode = "salt"; // 'salt' | 'sodium'
+  let calcOpen = true;
+
+  // ---------- Helpers ----------
+  function parseID(str) {
+    if (str === "" || str === null || str === undefined) return NaN;
+    const normalized = String(str).trim().replace(",", ".");
+    return parseFloat(normalized);
+  }
+
+  function formatID(n, digits = 2) {
+    if (n === null || n === undefined || isNaN(n)) return "-";
+    const rounded = Math.round(n * Math.pow(10, digits)) / Math.pow(10, digits);
+    return rounded.toLocaleString("id-ID", { maximumFractionDigits: digits });
+  }
+
+  // Pembulatan untuk menghindari galat floating point di sekitar batas cut-off
+  function round6(n) {
+    return Math.round(n * 1e6) / 1e6;
+  }
+
+  function classify(value, rule) {
+    const v = round6(value);
+    if (v <= rule.green) return "green";
+    if (v <= rule.amber) return "amber";
+    return "red";
+  }
+
+  function getBasis() {
+    return BASIS_OPTIONS.find((b) => b.key === basisKey);
+  }
+
+  function needsDenom() {
+    return getBasis().mode !== "direct";
+  }
+
+  // ---------- DOM refs ----------
+  const basisGrid = document.getElementById("basisGrid");
+  const denomField = document.getElementById("denomField");
+  const denomLabel = document.getElementById("denomLabel");
+  const denomInput = document.getElementById("denomInput");
+  const denomError = document.getElementById("denomError");
+  const nutrientContextLabel = document.getElementById("nutrientContextLabel");
+
+  const foodNameInput = document.getElementById("foodName");
+  const fatInput = document.getElementById("fatInput");
+  const satFatInput = document.getElementById("satFatInput");
+  const sugarInput = document.getElementById("sugarInput");
+  const saltInput = document.getElementById("saltInput");
+
+  const fatError = document.getElementById("fatError");
+  const satFatError = document.getElementById("satFatError");
+  const sugarError = document.getElementById("sugarError");
+  const saltError = document.getElementById("saltError");
+  const satFatWarning = document.getElementById("satFatWarning");
+
+  const saltFieldLabel = document.getElementById("saltFieldLabel");
+  const saltModeSaltBtn = document.getElementById("saltModeSaltBtn");
+  const saltModeSodiumBtn = document.getElementById("saltModeSodiumBtn");
+  const saltConversionNote = document.getElementById("saltConversionNote");
+
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const resultsSection = document.getElementById("resultsSection");
+  const resultsHeading = document.getElementById("resultsHeading");
+  const resultsGrid = document.getElementById("resultsGrid");
+  const summaryText = document.getElementById("summaryText");
+
+  const calcToggle = document.getElementById("calcToggle");
+  const calcChevron = document.getElementById("calcChevron");
+  const calcBody = document.getElementById("calcBody");
+  const calcIntro = document.getElementById("calcIntro");
+  const calcItems = document.getElementById("calcItems");
+
+  // Only allow digits, comma, dot in numeric text inputs
+  function restrictNumeric(el) {
+    el.addEventListener("input", () => {
+      if (!/^[0-9]*[.,]?[0-9]*$/.test(el.value)) {
+        el.value = el.value.slice(0, -1);
+      }
+      renderLiveValidation();
+    });
+  }
+  [fatInput, satFatInput, sugarInput, saltInput, denomInput].forEach(restrictNumeric);
+
+  // ---------- Render basis buttons ----------
+  function renderBasisGrid() {
+    basisGrid.innerHTML = "";
+    BASIS_OPTIONS.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "basis-btn" + (opt.key === basisKey ? " active" : "");
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        basisKey = opt.key;
+        denomInput.value = "";
+        clearErrors();
+        hideResults();
+        renderBasisGrid();
+        renderDenomField();
+        renderNutrientContext();
+        renderLiveValidation();
+      });
+      basisGrid.appendChild(btn);
+    });
+  }
+
+  function renderDenomField() {
+    const basis = getBasis();
+    if (needsDenom()) {
+      denomField.classList.remove("hidden");
+      denomLabel.textContent = basis.denomLabel;
+      denomInput.placeholder = basis.denomPlaceholder;
+    } else {
+      denomField.classList.add("hidden");
+    }
+  }
+
+  function renderNutrientContext() {
+    const basis = getBasis();
+    if (basis.mode === "direct") {
+      nutrientContextLabel.textContent = `Nilai gizi per 100 ${basis.unit}`;
+    } else {
+      const d = denomInput.value || "...";
+      nutrientContextLabel.textContent = `Nilai gizi untuk ${d} ${basis.unit}`;
+    }
+  }
+
+  denomInput.addEventListener("input", () => {
+    renderNutrientContext();
+  });
+
+  // ---------- Salt / Sodium toggle ----------
+  function setSaltMode(mode) {
+    saltMode = mode;
+    saltInput.value = "";
+    saltError.classList.add("hidden");
+    hideResults();
+    renderSaltUI();
+  }
+
+  function renderSaltUI() {
+    saltModeSaltBtn.classList.toggle("active", saltMode === "salt");
+    saltModeSodiumBtn.classList.toggle("active", saltMode === "sodium");
+    if (saltMode === "salt") {
+      saltFieldLabel.innerHTML = 'Garam <span class="unit">(g)</span>';
+      saltInput.placeholder = "0,0";
+      saltConversionNote.classList.add("hidden");
+    } else {
+      saltFieldLabel.innerHTML = 'Natrium <span class="unit">(mg)</span>';
+      saltInput.placeholder = "cth. 400";
+      saltConversionNote.classList.remove("hidden");
+    }
+  }
+
+  saltModeSaltBtn.addEventListener("click", () => setSaltMode("salt"));
+  saltModeSodiumBtn.addEventListener("click", () => setSaltMode("sodium"));
+
+  // ---------- Live validation ----------
+  function renderLiveValidation() {
+    const fatNum = parseID(fatInput.value);
+    const satFatNum = parseID(satFatInput.value);
+    const satFatExceedsFat =
+      fatInput.value !== "" &&
+      satFatInput.value !== "" &&
+      !isNaN(fatNum) &&
+      !isNaN(satFatNum) &&
+      satFatNum > fatNum;
+
+    satFatWarning.classList.toggle("hidden", !satFatExceedsFat);
+
+    const denomNum = parseID(denomInput.value);
+    const denomInvalid = needsDenom() && (denomInput.value === "" || isNaN(denomNum) || denomNum <= 0);
+
+    analyzeBtn.disabled = satFatExceedsFat || denomInvalid;
+  }
+
+  function clearErrors() {
+    [fatError, satFatError, sugarError, saltError, denomError].forEach((el) => {
+      el.classList.add("hidden");
+      el.textContent = "";
+    });
+    [fatInput, satFatInput, sugarInput, saltInput, denomInput].forEach((el) => el.classList.remove("error"));
+    satFatWarning.classList.add("hidden");
+  }
+
+  function hideResults() {
+    resultsSection.classList.add("hidden");
+  }
+
+  // ---------- Reset ----------
+  function resetAll() {
+    foodNameInput.value = "";
+    basisKey = "food100";
+    denomInput.value = "";
+    saltMode = "salt";
+    fatInput.value = "";
+    satFatInput.value = "";
+    sugarInput.value = "";
+    saltInput.value = "";
+    clearErrors();
+    hideResults();
+    renderBasisGrid();
+    renderDenomField();
+    renderNutrientContext();
+    renderSaltUI();
+    renderLiveValidation();
+  }
+
+  resetBtn.addEventListener("click", resetAll);
+
+  // ---------- Analyze ----------
+  function handleAnalyze() {
+    clearErrors();
+    const basis = getBasis();
+    const values = { fat: fatInput.value, satFat: satFatInput.value, sugar: sugarInput.value, salt: saltInput.value };
+    const errorEls = { fat: fatError, satFat: satFatError, sugar: sugarError, salt: saltError };
+    const inputEls = { fat: fatInput, satFat: satFatInput, sugar: sugarInput, salt: saltInput };
+
+    let hasError = false;
+    const parsed = {};
+
+    NUTRIENT_META.forEach(({ key, label }) => {
+      const raw = values[key];
+      if (raw === "" || raw === null || raw === undefined) {
+        errorEls[key].textContent = `${label} wajib diisi.`;
+        errorEls[key].classList.remove("hidden");
+        inputEls[key].classList.add("error");
+        hasError = true;
+        return;
+      }
+      const num = parseID(raw);
+      if (isNaN(num) || num < 0) {
+        errorEls[key].textContent = `${label} harus berupa angka ≥ 0.`;
+        errorEls[key].classList.remove("hidden");
+        inputEls[key].classList.add("error");
+        hasError = true;
+        return;
+      }
+      parsed[key] = num;
+    });
+
+    const denomNum = parseID(denomInput.value);
+    if (needsDenom() && (denomInput.value === "" || isNaN(denomNum) || denomNum <= 0)) {
+      denomError.textContent = "Berat/volume harus diisi dengan angka lebih besar dari 0.";
+      denomError.classList.remove("hidden");
+      denomInput.classList.add("error");
+      hasError = true;
+    }
+
+    const satFatExceedsFat = !isNaN(parsed.fat) && !isNaN(parsed.satFat) && parsed.satFat > parsed.fat;
+    if (satFatExceedsFat) {
+      satFatError.textContent = "Lemak jenuh tidak boleh melebihi lemak total.";
+      satFatError.classList.remove("hidden");
+      satFatInput.classList.add("error");
+      hasError = true;
+    }
+
+    if (hasError) {
+      hideResults();
+      return;
+    }
+
+    const rules = RULES[basis.type];
+    const denomValue = needsDenom() ? denomNum : 100;
+
+    const saltAsGram = saltMode === "sodium" ? parsed.salt / SODIUM_TO_SALT : parsed.salt;
+
+    const computed = NUTRIENT_META.map((meta) => {
+      const enteredRaw = parsed[meta.key];
+      const enteredGram = meta.key === "salt" ? saltAsGram : enteredRaw;
+      const converted = needsDenom() ? (enteredGram / denomValue) * 100 : enteredGram;
+
+      // Langkah 1: warna dasar per 100 g / 100 mL
+      let level = classify(converted, rules[meta.key]);
+      let portionRed = false;
+      let portionLimit = null;
+
+      // Langkah 2: kriteria sajian besar (> 30% Reference Intake per sajian)
+      if (needsDenom()) {
+        const pr = PORTION_RED[basis.type];
+        portionLimit = pr[meta.key];
+        if (denomValue > pr.threshold && round6(enteredGram) > portionLimit) {
+          if (level !== "red") portionRed = true;
+          level = "red";
+        }
+      }
+
+      return {
+        ...meta, enteredRaw, enteredGram, denomValue, converted, level,
+        portionRed, portionLimit, unit: basis.unit,
+      };
+    });
+
+    renderResults(computed, basis);
+  }
+
+  analyzeBtn.addEventListener("click", handleAnalyze);
+
+  // ---------- Render results ----------
+  function renderResults(results, basis) {
+    resultsSection.classList.remove("hidden");
+
+    const foodName = foodNameInput.value.trim();
+    if (foodName) {
+      resultsHeading.textContent = `Hasil untuk: ${foodName}`;
+      resultsHeading.classList.remove("hidden");
+    } else {
+      resultsHeading.classList.add("hidden");
+    }
+
+    resultsGrid.innerHTML = "";
+    results.forEach((r, i) => {
+      const card = document.createElement("div");
+      card.className = "result-card";
+      card.style.animationDelay = `${i * 80}ms`;
+      card.innerHTML = `
+        <div class="result-card-top">
+          <div class="result-card-name">
+            <span class="icon">${r.icon}</span>
+            <span class="label">${r.label}</span>
+          </div>
+          <span class="level-badge ${r.level}">
+            <span>${LIGHT_DOT[r.level]}</span> ${LIGHT_LABEL[r.level]}
+          </span>
+        </div>
+        <div class="result-card-value">
+          ${formatID(r.converted)} <span class="unit-sub">g / 100${r.unit}</span>
+        </div>
+        ${r.portionRed ? '<div class="portion-note">Dinaikkan ke merah karena sajian besar melebihi 30% Reference Intake.</div>' : ""}
+      `;
+      resultsGrid.appendChild(card);
+    });
+
+    summaryText.textContent = buildSummary(results);
+
+    // Detail Perhitungan
+    calcIntro.textContent = needsDenom()
+      ? `Warna dasar dihitung dari nilai ekuivalen per 100 ${basis.unit}, bukan langsung dari nilai yang dimasukkan. Untuk sajian besar (lebih dari ${PORTION_RED[basis.type].threshold} ${basis.unit}), dilakukan pemeriksaan tambahan terhadap batas 30% Reference Intake per sajian.`
+      : `Nilai yang dimasukkan sudah dalam bentuk per 100 ${basis.unit}, sehingga tidak diperlukan konversi.`;
+
+    calcItems.innerHTML = "";
+    results.forEach((r) => {
+      const isSalt = r.key === "salt";
+      let bodyHTML = "";
+
+      if (isSalt && saltMode === "sodium") {
+        bodyHTML += `Input pengguna: <strong>${formatID(r.enteredRaw)} mg natrium</strong>`;
+        if (needsDenom()) bodyHTML += ` / ${formatID(r.denomValue)} ${r.unit}`;
+        bodyHTML += `<br/>Konversi natrium → garam: ${formatID(r.enteredRaw)} ÷ 400 = <strong>${formatID(r.enteredGram)} g garam</strong><br/>`;
+      } else {
+        bodyHTML += `Input pengguna: <strong>${formatID(r.enteredRaw)} g</strong>`;
+        if (needsDenom()) bodyHTML += ` / ${formatID(r.denomValue)} ${r.unit}`;
+        bodyHTML += `<br/>`;
+      }
+
+      if (needsDenom()) {
+        bodyHTML += `Konversi: ${formatID(r.enteredGram)} ÷ ${formatID(r.denomValue)} × 100 = <strong>${formatID(r.converted)} g per 100 ${r.unit}</strong><br/>`;
+      } else {
+        bodyHTML += `Tidak ada konversi (nilai sudah per 100 ${r.unit}).<br/>`;
+      }
+
+      if (r.portionRed) {
+        bodyHTML += `<em>Dinaikkan ke merah: satu sajian (${formatID(r.denomValue)} ${r.unit}) mengandung ${formatID(r.enteredGram)} g, melebihi batas sajian besar ${formatID(r.portionLimit)} g (30% Reference Intake).</em><br/>`;
+      }
+
+      bodyHTML += `Kategori: <strong style="color: var(--${r.level}-text)">${LIGHT_DOT[r.level]} ${LIGHT_LABEL[r.level]}</strong>`;
+
+      const item = document.createElement("div");
+      item.className = "calc-item";
+      item.innerHTML = `<div class="calc-item-title">${r.icon} ${r.label}</div><div class="calc-item-body">${bodyHTML}</div>`;
+      calcItems.appendChild(item);
+    });
+
+    calcOpen = true;
+    renderCalcOpen();
+  }
+
+  function buildSummary(results) {
+    const low = results.filter((r) => r.level === "green").map((r) => r.label.toLowerCase());
+    const medium = results.filter((r) => r.level === "amber").map((r) => r.label.toLowerCase());
+    const high = results.filter((r) => r.level === "red").map((r) => r.label.toLowerCase());
+
+    const parts = [];
+    if (low.length) parts.push(`kandungan ${joinID(low)} yang rendah`);
+    if (medium.length) parts.push(`${joinID(medium)} tergolong sedang`);
+    if (high.length) parts.push(`${joinID(high)} tergolong tinggi`);
+
+    if (parts.length === 0) return "Belum ada data untuk dianalisis.";
+    return `Produk ini memiliki ${parts.join(", tetapi ")}.`;
+  }
+
+  function joinID(arr) {
+    if (arr.length === 1) return arr[0];
+    if (arr.length === 2) return `${arr[0]} dan ${arr[1]}`;
+    return `${arr.slice(0, -1).join(", ")}, dan ${arr[arr.length - 1]}`;
+  }
+
+  // ---------- Calc panel toggle ----------
+  function renderCalcOpen() {
+    calcBody.classList.toggle("hidden", !calcOpen);
+    calcChevron.textContent = calcOpen ? "Tutup ▲" : "Buka ▼";
+  }
+
+  calcToggle.addEventListener("click", () => {
+    calcOpen = !calcOpen;
+    renderCalcOpen();
+  });
+
+  // ---------- Init ----------
+  renderBasisGrid();
+  renderDenomField();
+  renderNutrientContext();
+  renderSaltUI();
+  renderLiveValidation();
+</script>
+
+</body>
+</html>
