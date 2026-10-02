@@ -219,7 +219,7 @@
   <section class="input-card">
     <div class="field">
       <span class="field-label">Nama makanan/minuman <span class="unit">(opsional)</span></span>
-      <input type="text" id="foodName" placeholder="Contoh: Fried chicken" />
+      <input type="text" id="foodName" placeholder="Contoh: Susu kental manis" />
     </div>
 
     <div style="margin-bottom:18px;">
@@ -259,15 +259,15 @@
 
       <div class="field" style="margin-bottom:0;">
         <div class="salt-toggle">
-          <span class="field-label" id="saltFieldLabel">Garam <span class="unit">(g)</span></span>
+          <span class="field-label" id="saltFieldLabel">Natrium <span class="unit">(mg)</span></span>
           <div class="salt-toggle-btns">
-            <button type="button" class="pill-btn active" id="saltModeSaltBtn">Garam</button>
-            <button type="button" class="pill-btn" id="saltModeSodiumBtn">Natrium</button>
+            <button type="button" class="pill-btn active" id="saltModeSodiumBtn">Natrium</button>
+            <button type="button" class="pill-btn" id="saltModeSaltBtn">Garam</button>
           </div>
         </div>
-        <input type="text" inputmode="decimal" id="saltInput" placeholder="0,0" />
+        <input type="text" inputmode="decimal" id="saltInput" placeholder="cth. 400" />
         <span class="error-text hidden" id="saltError"></span>
-        <span class="salt-note hidden" id="saltConversionNote">Otomatis dikonversi: Garam (g) = Natrium (mg) ÷ 400</span>
+        <span class="salt-note" id="saltConversionNote">Otomatis dikonversi: Garam (g) = Natrium (mg) ÷ 400</span>
       </div>
     </div>
 
@@ -371,7 +371,7 @@
 
   // ---------- State ----------
   let basisKey = "food100";
-  let saltMode = "salt"; // 'salt' | 'sodium'
+  let saltMode = "sodium"; // 'salt' | 'sodium'
   let calcOpen = true;
 
   // ---------- Helpers ----------
@@ -567,7 +567,7 @@
     foodNameInput.value = "";
     basisKey = "food100";
     denomInput.value = "";
-    saltMode = "salt";
+    saltMode = "sodium";
     fatInput.value = "";
     satFatInput.value = "";
     sugarInput.value = "";
